@@ -42,17 +42,27 @@ export const useAuthStore = defineStore('auth', {
         },
 
         // 处理登录回调
-        async handleAuthCallback(provider) {
+        async handleAuthCallback(provider, code) {
             try {
-                const response = await authAPI.authCallback(provider)
+                // 如果有code，先调用auth接口获取x-forget-cookie
+                if (code) {
+                    await authAPI.getAuthUrl(provider, code)
+                }
+
+                // 再调用callback接口完成认证
+                const response = await authAPI.authCallback(provider, code)
                 if (response) {
                     this.user = response
-                    this.token = response.token || ''
+                    // 从localStorage获取token（在request拦截器中已设置）
+                    this.token = localStorage.getItem('forgeturl_token') || ''
                     this.isLoggedIn = true
 
                     // 保存到本地存储
                     storage.set(STORAGE_KEYS.TOKEN, this.token)
                     storage.set(STORAGE_KEYS.USER_INFO, this.user)
+
+                    // 清除临时的forget-cookie
+                    localStorage.removeItem('forgeturl_forget_cookie')
 
                     return response
                 }

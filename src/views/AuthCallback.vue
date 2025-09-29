@@ -25,10 +25,11 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
   const provider = route.params.provider
+  const code = route.query.code // 获取OAuth回调的code参数
 
   try {
     // 处理登录回调
-    const userInfo = await authStore.handleAuthCallback(provider)
+    const userInfo = await authStore.handleAuthCallback(provider, code)
 
     ElMessage.success(`欢迎回来，${userInfo.display_name || userInfo.username}！`)
 
